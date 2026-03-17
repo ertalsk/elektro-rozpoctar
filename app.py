@@ -1,40 +1,52 @@
 import streamlit as st
-import time
+import pandas as pd
 
-# Nastavenie vzhľadu stránky
 st.set_page_config(page_title="AI Elektro Rozpočtár", page_icon="⚡", layout="wide")
 
-st.title("⚡ AI Kontrola a Naceňovanie Elektroinštalácií")
-st.markdown("Prototyp aplikácie na automatickú kontrolu výkazov výmer a PDF výkresov.")
+st.title("⚡ AI Kontrola a Naceňovanie Elektroinštalácií (ŽIVÁ VERZIA)")
+st.markdown("Teraz aplikácia reálne číta dáta z vášho Excelu.")
 
-# Rozdelenie obrazovky
 col1, col2 = st.columns(2)
 
 with col1:
     st.header("1. Vstupné dáta")
     excel_file = st.file_uploader("Nahrať slepý rozpočet z Cenkrosu (Excel)", type=["xlsx", "xls"])
-    pdf_file = st.file_uploader("Nahrať výkres - Situácia (PDF, JPG, PNG)", type=["pdf", "png", "jpg"])
+    pdf_file = st.file_uploader("Nahrať výkres (PDF, JPG, PNG)", type=["pdf", "png", "jpg"])
 
 with col2:
     st.header("2. Analýza a Výsledky")
-    if st.button("Spustiť AI kontrolu a naceniť", type="primary"):
-        if excel_file and pdf_file:
-            # Tu sa simuluje práca AI
-            with st.spinner("Párujem položky s cenníkom Hagard:HAL..."):
-                time.sleep(2)
-                st.success("✅ Cenník úspešne spárovaný! (Nájdených 28/28 položiek)")
-            
-            with st.spinner("AI skenuje výkres a hľadá elektro značky..."):
-                time.sleep(3)
-                st.info("🔍 Analýza výkresu dokončená.")
+    if st.button("Spustiť kontrolu Excelu", type="primary"):
+        if excel_file is not None:
+            try:
+                # REÁLNE NAČÍTANIE EXCELU
+                df = pd.read_excel(excel_file)
                 
-            st.markdown("### 🚨 Zistené nezrovnalosti v projekte:")
-            st.error("**❌ CHYBA - Chýbajúca práca:** V Exceli je kábel AYKY 3x240+120, ale chýba položka na ukončenie PEN vodiča 120mm2. (Položka 14 rieši len 240mm2).")
-            st.warning("**⚠️ UPOZORNENIE - Káble vs. Výkop:** Dĺžka kábla (130m) nesedí s dĺžkou ryhy (60m). Overte uloženie 2 káblov do jednej ryhy.")
-            st.success("**🟢 KUSY SÚHLASIA:** Počet poistkových vložiek (18 ks) matematicky súhlasí s počtom montáží.")
-            st.success("**🟢 PDF KONTROLA OK:** Značka 'Skriňa SR4' nájdená na výkrese (1 ks) súhlasí s počtom v Exceli (1 ks).")
-            
-            st.markdown("### 💾 Export")
-            st.button("📥 Stiahnuť nacenený rozpočet pre klienta (Excel)")
+                st.success(f"✅ Súbor '{excel_file.name}' bol úspešne prečítaný!")
+                st.write(f"📊 **Počet nájdených riadkov v tabuľke:** {len(df)}")
+                
+                # Zobrazenie prvých 10 riadkov z vášho reálneho Excelu
+                st.markdown("### Ukážka prečítaných dát:")
+                st.dataframe(df.head(10))
+                
+                # Jednoduchá dynamická analýza
+                st.markdown("### 🔍 Rýchly audit obsahu:")
+                
+                # Spojíme všetky texty v tabuľke do jedného, aby sme v nich mohli hľadať
+                vsetok_text = df.astype(str).to_string().lower()
+                
+                if "kábel" in vsetok_text or "kabel" in vsetok_text:
+                    st.info("💡 Aplikácia detekovala v rozpočte káble.")
+                if "zásuvka" in vsetok_text or "zasuvka" in vsetok_text:
+                    st.info("💡 Aplikácia detekovala v rozpočte zásuvky.")
+                if "cenkros" in vsetok_text:
+                    st.info("💡 Vyzerá to ako štandardný export z Cenkrosu.")
+                    
+            except Exception as e:
+                st.error(f"Nastala chyba pri čítaní Excelu: {e}")
+                st.warning("Skúste nahrať štandardný .xlsx súbor.")
+                
         else:
-            st.warning("👈 Prosím, najprv nahrajte Excel aj Výkres (PDF) vľavej časti obrazovky.")
+            st.warning("👈 Prosím, nahrajte najprv Excel súbor vľavo.")
+            
+        if pdf_file is not None:
+            st.info(f"📁 PDF súbor '{pdf_file.name}' zaevidovaný. (Umelá inteligencia pre čítanie výkresov vyžaduje zložitejšie nastavenie servera, zatiaľ testujeme len Excel).")
